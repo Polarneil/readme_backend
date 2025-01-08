@@ -1,0 +1,46 @@
+# Node and Python environments
+node_modules/
+.env
+*.pyc
+__pycache__/
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE and Editor settings
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Build files
+dist/
+build/
+out/
+coverage/
+
+# Dependency directories
+.venv/
+.env/
+bin/
+obj/
+
+# Git
+*.bak
+*.orig
+*.rej
+
+# Secrets
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
