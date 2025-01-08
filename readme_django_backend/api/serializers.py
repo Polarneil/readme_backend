@@ -10,3 +10,9 @@ class RepoRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = RepoRequest
         fields = '__all__'
+
+
+class ReadmeFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReadmeFile
+        fields = '__all__'
