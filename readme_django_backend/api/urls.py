@@ -1,6 +1,7 @@
 from django.urls import path
-from .views import RepoRequestList
+from .views import TestEndpoint, RepoRequestView
 
 urlpatterns = [
-    path('test/', RepoRequestList.as_view(), name='test')
+    path('test/', TestEndpoint.as_view(), name='test'),
+    path('repo/', RepoRequestView.as_view(), name='repo')
 ]
