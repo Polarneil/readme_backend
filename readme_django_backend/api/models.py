@@ -15,7 +15,7 @@ class RepoRequest(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 
-class ReadmeFile(models.Model):
+class ReadMeFile(models.Model):
     repo_request = models.OneToOneField(
         RepoRequest,
         on_delete=models.CASCADE,

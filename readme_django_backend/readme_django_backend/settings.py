@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from corsheaders.defaults import default_headers
 
 load_dotenv()
 
@@ -30,9 +31,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'api.apps.ApiConfig',
+    'rest_framework',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # Cors
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -75,6 +79,35 @@ DATABASES = {
         'HOST': os.getenv('PG_HOST'),
     }
 }
+
+
+# CORS settings
+FRONTEND_URL = os.getenv('FRONTEND_URL')
+CORS_ALLOW_ALL_ORIGINS = False  # Ensure only specified origins are allowed
+CORS_ALLOWED_ORIGINS = [FRONTEND_URL]  # Add your frontend origin
+CORS_ALLOW_CREDENTIALS = True  # Allow credentials such as cookies, authorization headers
+
+# Uncomment the following if running into CORS errors on form submit.
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'authorization',
+    'content-type',
+    'x-csrftoken',
+    'x-requested-with',
+    'user-id',
+    'conversation-id',
+    'Conversation-UUID',
+    'X-Accel-Buffering',
+    # Add any other headers your application needs
+]
+
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
 
 
 # Password validation

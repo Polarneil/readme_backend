@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import RepoRequest, ReadmeFile
+from .models import RepoRequest, ReadMeFile
 
 
 class SuccessSerializer(serializers.Serializer):
@@ -14,5 +14,5 @@ class RepoRequestSerializer(serializers.ModelSerializer):
 
 class ReadmeFileSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ReadmeFile
+        model = ReadMeFile
         fields = '__all__'

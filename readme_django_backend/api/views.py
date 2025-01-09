@@ -1,9 +1,18 @@
+import os
+import tempfile
+import git
+import openai
 from rest_framework.response import Response
 from rest_framework import generics, status
 from django.shortcuts import get_object_or_404
+from dotenv import load_dotenv
 
-from .models import RepoRequest, ReadmeFile
+from .models import RepoRequest, ReadMeFile
 from .serializers import SuccessSerializer, RepoRequestSerializer, ReadmeFileSerializer
+
+load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY")
+client = openai.OpenAI(api_key=openai.api_key)
 
 
 class TestEndpoint(generics.ListAPIView):
@@ -21,7 +30,7 @@ class RepoRequestView(generics.ListCreateAPIView):
         serializer = RepoRequestSerializer(data=request.data)
 
         if serializer.is_valid():
-            repo_request_obj = serializer.save()  # Save the message to db
+            repo_request_obj = serializer.save()
             print(f"Repo Request Created: {repo_request_obj}")
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -34,37 +43,73 @@ class RepoRequestView(generics.ListCreateAPIView):
 class ReadMeFileView(generics.ListCreateAPIView):
     serializer_class = ReadmeFileSerializer
 
+    def clone_repo(self, repo_url):
+        temp_dir = tempfile.mkdtemp()
+        git.Repo.clone_from(repo_url, temp_dir)
+        return temp_dir
+
+    def analyze_repo(self, repo_path):
+        repo_summary = {}
+        for root, dirs, files in os.walk(repo_path):
+            for file in files:
+                if file.endswith(('.py', '.js', '.ts', '.go', '.html', '.css', 'Dockerfile', '.ipynb', '.csv', '.txt')):
+                    with open(os.path.join(root, file), 'r') as f:
+                        repo_summary[file] = f.read()[:1000]  # Limit to first 1000 chars
+        return repo_summary
+
+    def generate_prompt(self, repo_summary):
+        prompt = "Generate a professional README.md for the following code repository.\n\n"
+        for file, content in repo_summary.items():
+            prompt += f"File: {file}\nContent:\n{content}\n\n"
+        prompt += "Provide a project overview, installation instructions, usage, and contribution guidelines."
+        return prompt
+
+    def generate_readme(self, prompt):
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=1000
+        )
+        return response.choices[0].message.content
+
     def create(self, request, *args, **kwargs):
-        # Extract the repo_request ID from the incoming request
         repo_request_id = request.data.get('repo_request')
 
-        # Ensure the associated RepoRequest exists
         repo_request = get_object_or_404(RepoRequest, id=repo_request_id)
 
-        # Check if a ReadmeFile already exists for this RepoRequest
-        readme_file, created = ReadmeFile.objects.get_or_create(
+        readme_file, created = ReadMeFile.objects.get_or_create(
             repo_request=repo_request,
             defaults={'content': ''}
         )
 
         if not created:
-            # If the ReadmeFile already exists, return its data
             return Response(
-                {"detail": "Readme already exists.", "readme_id": readme_file.id},
+                {"detail": f"README for {repo_request.repo_url} already exists.", "readme_id": readme_file.id},
                 status=status.HTTP_200_OK
             )
 
-        # AI Logic Placeholder: Generate README content
-        # This is where the AI-based README generation will happen.
-        # For now, using a static placeholder.
-        readme_file.content = f"# README for {repo_request.repo_url}\n\nGenerated content goes here."
-        readme_file.save()
+        try:
+            # Clone and analyze the repository
+            repo_path = self.clone_repo(repo_request.repo_url)
+            repo_summary = self.analyze_repo(repo_path)
 
-        # Serialize the created/updated object
+            # Generate README content using AI
+            prompt = self.generate_prompt(repo_summary)
+            readme_content = self.generate_readme(prompt)
+
+            # Save content to model and clean up
+            readme_file.content = readme_content
+            readme_file.save()
+
+            # Remove temp directory
+            os.system(f"rm -rf {repo_path}")
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         serializer = self.get_serializer(readme_file)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def get_queryset(self):
-        # Return all ReadmeFile objects
-        queryset = ReadmeFile.objects.all()
+        queryset = ReadMeFile.objects.all()
         return queryset
