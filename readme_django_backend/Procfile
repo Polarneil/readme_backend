@@ -1,0 +1,1 @@
+web: gunicorn readme_django_backend.wsgi:application --workers 3 --threads 2
