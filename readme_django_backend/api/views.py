@@ -4,6 +4,7 @@ import git
 import openai
 from rest_framework.response import Response
 from rest_framework import generics, status
+from rest_framework.mixins import UpdateModelMixin
 from django.shortcuts import get_object_or_404
 from dotenv import load_dotenv
 
@@ -40,7 +41,7 @@ class RepoRequestView(generics.ListCreateAPIView):
         return queryset
 
 
-class ReadMeFileView(generics.ListCreateAPIView):
+class ReadMeFileView(generics.ListCreateAPIView, UpdateModelMixin):
     serializer_class = ReadmeFileSerializer
 
     def clone_repo(self, repo_url):
@@ -52,7 +53,7 @@ class ReadMeFileView(generics.ListCreateAPIView):
         repo_summary = {}
         for root, dirs, files in os.walk(repo_path):
             for file in files:
-                if file.endswith(('.py', '.js', '.ts', '.go', '.html', '.css', 'Dockerfile', '.ipynb', '.csv', '.txt')):
+                if file.endswith(('.py', '.js', '.ts', '.tsx', '.go', '.html', '.css', 'Dockerfile', '.ipynb', '.csv', '.txt')):
                     with open(os.path.join(root, file), 'r') as f:
                         repo_summary[file] = f.read()[:1000]  # Limit to first 1000 chars
         return repo_summary
@@ -118,6 +119,23 @@ class ReadMeFileView(generics.ListCreateAPIView):
         try:
             readme_file = ReadMeFile.objects.get(key=key)
             serializer = ReadmeFileSerializer(readme_file)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except ReadMeFile.DoesNotExist:
+            return Response({'error': 'ReadMeFile with this key does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+
+    def patch(self, request, *args, **kwargs):
+        key = request.data.get('key')
+        new_content = request.data.get('content')
+
+        if not key or new_content is None:
+            return Response({'error': 'Key and content are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            readme_file = ReadMeFile.objects.get(key=key)
+            readme_file.content = new_content
+            readme_file.save()
+
+            serializer = self.get_serializer(readme_file)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except ReadMeFile.DoesNotExist:
             return Response({'error': 'ReadMeFile with this key does not exist.'}, status=status.HTTP_404_NOT_FOUND)
