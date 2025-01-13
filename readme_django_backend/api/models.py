@@ -1,8 +1,9 @@
 from django.db import models
+import uuid
 
 
 class RepoRequest(models.Model):
-    repo_url = models.URLField(unique=True)
+    repo_url = models.URLField()
     status = models.CharField(
         max_length=20,
         choices=[
@@ -21,5 +22,6 @@ class ReadMeFile(models.Model):
         on_delete=models.CASCADE,
         related_name='readme'
     )
+    key = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)

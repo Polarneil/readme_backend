@@ -110,6 +110,14 @@ class ReadMeFileView(generics.ListCreateAPIView):
         serializer = self.get_serializer(readme_file)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def get_queryset(self):
-        queryset = ReadMeFile.objects.all()
-        return queryset
+    def get(self, request, *args, **kwargs):
+        key = request.GET.get('key')
+        if not key:
+            return Response({'error': 'Key parameter is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            readme_file = ReadMeFile.objects.get(key=key)
+            serializer = ReadmeFileSerializer(readme_file)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except ReadMeFile.DoesNotExist:
+            return Response({'error': 'ReadMeFile with this key does not exist.'}, status=status.HTTP_404_NOT_FOUND)
