@@ -98,9 +98,6 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
     'content-type',
     'x-csrftoken',
     'x-requested-with',
-    'user-id',
-    'conversation-id',
-    'Conversation-UUID',
     'X-Accel-Buffering',
     # Add any other headers your application needs
 ]
