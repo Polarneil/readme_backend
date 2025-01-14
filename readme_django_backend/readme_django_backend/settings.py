@@ -18,7 +18,7 @@ SECRET_KEY = 'django-insecure-89bj@ktcotogl2#kx(w7xhs(-h2*u_!e(d!pkr2a88x(p7j!om
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(',')
 
 
 # Application definition
@@ -86,6 +86,11 @@ FRONTEND_URL = os.getenv('FRONTEND_URL')
 CORS_ALLOW_ALL_ORIGINS = False  # Ensure only specified origins are allowed
 CORS_ALLOWED_ORIGINS = [FRONTEND_URL]  # Add your frontend origin
 CORS_ALLOW_CREDENTIALS = True  # Allow credentials such as cookies, authorization headers
+
+# CSRF settings
+CSRF_TRUSTED_ORIGINS = [FRONTEND_URL]  # Add your frontend origin
+CSRF_COOKIE_SECURE = True  # Use True in production with HTTPS, False in development
+CSRF_COOKIE_HTTPONLY = False  # Typically False to allow frontend frameworks access
 
 # Uncomment the following if running into CORS errors on form submit.
 CORS_ALLOW_HEADERS = list(default_headers) + [

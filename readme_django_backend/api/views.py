@@ -53,7 +53,12 @@ class ReadMeFileView(generics.ListCreateAPIView, UpdateModelMixin):
         repo_summary = {}
         for root, dirs, files in os.walk(repo_path):
             for file in files:
-                if file.endswith(('.py', '.js', '.ts', '.tsx', '.go', '.html', '.css', 'Dockerfile', '.ipynb', '.csv', '.txt')):
+                if file.endswith((
+                        '.c', '.cpp', '.cs', '.java', '.py', '.js', '.ts', '.jsx', '.tsx',
+                        '.rb', '.php', '.swift', '.go', '.rs', '.kt', '.m', '.r', '.pl',
+                        '.lua', '.sh', '.html', '.css', '.scss', '.xml', '.json', '.yml',
+                        '.yaml', '.sql', 'Dockerfile', '.ipynb', '.csv', '.txt'
+                )):
                     with open(os.path.join(root, file), 'r') as f:
                         repo_summary[file] = f.read()[:1000]  # Limit to first 1000 chars
         return repo_summary
