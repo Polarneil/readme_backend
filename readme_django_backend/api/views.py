@@ -63,11 +63,19 @@ class ReadMeFileView(generics.ListCreateAPIView, UpdateModelMixin):
                         repo_summary[file] = f.read()[:1000]  # Limit to first 1000 chars
         return repo_summary
 
-    def generate_prompt(self, repo_summary):
-        prompt = "Generate a professional README.md for the following code repository.\n\n"
+    def generate_prompt(self, request, repo_summary):
+        repo_request_id = request.data.get('repo_request')
+        repo_request = get_object_or_404(RepoRequest, id=repo_request_id)
+        repo_url = repo_request.repo_url
+
+        example_format = "# Project Name..."
+        non_example_format = "```markdown # Project Name...```"
+
+        prompt = f"Generate a professional README.md for the following code repository. This is the git url, make sure to include it in the instructions if you add lines like git clone <repo url>: {repo_url}\n\n"
         for file, content in repo_summary.items():
             prompt += f"File: {file}\nContent:\n{content}\n\n"
         prompt += "Provide a project overview, installation instructions, usage, and contribution guidelines."
+        prompt += f"Do not include ```markdown backticks in your response. Just write the response in markdown. Use this example for reference: {example_format}. Not like this: {non_example_format}"
         return prompt
 
     def generate_readme(self, prompt):
@@ -100,7 +108,7 @@ class ReadMeFileView(generics.ListCreateAPIView, UpdateModelMixin):
             repo_summary = self.analyze_repo(repo_path)
 
             # Generate README content using AI
-            prompt = self.generate_prompt(repo_summary)
+            prompt = self.generate_prompt(request, repo_summary)
             readme_content = self.generate_readme(prompt)
 
             # Save content to model and clean up
